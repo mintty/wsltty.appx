@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Package IgnorableNamespaces="uap rescap rescap3" xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:rescap3="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities/3">
+  <Identity Name="mintty.wsltty" ProcessorArchitecture="x64" Publisher="CN=mintty" Version="1.0.0.0"/>
+  <Applications>
+    <Application Executable="bin\launcher.exe" EntryPoint="Windows.FullTrustApplication" Id="wsltty">
+      <uap:VisualElements DisplayName="wsltty" Description="Mintty as a terminal for Windows Subsystem for Linux" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+           <uap:DefaultTile Square71x71Logo="Assets\SmallTile.png"></uap:DefaultTile>
+        <uap:InitialRotationPreference>
+          <uap:Rotation Preference="portrait"/>
+          <uap:Rotation Preference="landscape"/>
+        </uap:InitialRotationPreference>
+      </uap:VisualElements>
+      <Extensions>
+        <rescap3:Extension Category="windows.desktopAppMigration">
+          <rescap3:DesktopAppMigration>
+            <rescap3:DesktopApp ShortcutPath="%ProgramData%\Microsoft\Windows\Start Menu\Programs\wsltty\wsltty.lnk"/>
+            <rescap3:DesktopApp ShortcutPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\wsltty\wsltty.lnk"/>
+          </rescap3:DesktopAppMigration>
+        </rescap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Resources>
+    <Resource Language="en-US"/>
+  </Resources>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Properties>
+    <DisplayName>wsltty</DisplayName>
+    <PublisherDisplayName>mintty</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MaxVersionTested="10.0.17600.0" MinVersion="10.0.10240.0"/>
+  </Dependencies>
+</Package>
