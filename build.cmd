@@ -3,6 +3,7 @@
 ::Clean before build
 color 0F
 rd /s /q build
+del /f /q privatekeyfile.pvk certfile.cer pfxfile.pfx wsltty.appx
 cls
 
 ::Set Environment
@@ -41,7 +42,7 @@ goto end
 
 ::Build Launcher
 msbuild.exe Launcher\Launcher.csproj
-copy Launcher\launcher.exe build\bin
+copy Launcher\Launcher.exe build\bin
 copy Launcher\Launcher.exe.config build\bin
 copy wsltty.ico build\bin
 
@@ -55,12 +56,9 @@ goto end
 )
 
 :SignAppx
-set /p X=[92mEnter New Password for PFX file[0m 
-set /p Y=[92mEnter the date when the certificate becomes valid (mm/dd/yyyy)[0m 
-set /p Z=[92mEnter the date when the certificate expires (mm/dd/yyyy)[0m 
-MakeCert.exe -sv privatekeyfile.pvk -n "CN=mintty" certfile.cer -b %Y% -e %Z% -r
-Pvk2Pfx.exe -pvk privatekeyfile.pvk -spc certfile.cer -pfx pfxfile.pfx -po %X%
-SignTool.exe sign /fd sha256 /a /f pfxfile.pfx /p %X% wsltty.appx
+MakeCert.exe -a sha256 -r -sv privatekeyfile.pvk -n "CN=mintty" certfile.cer
+Pvk2Pfx.exe -pvk privatekeyfile.pvk -spc certfile.cer -pfx pfxfile.pfx
+SignTool.exe sign /fd sha256 /a /f pfxfile.pfx wsltty.appx
 
 :end
 pause

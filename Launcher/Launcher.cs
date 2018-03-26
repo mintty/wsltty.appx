@@ -1,6 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Diagnostics;
+using System.Reflection;
 using Windows.Storage;
 
 namespace Launcher
@@ -9,27 +9,23 @@ namespace Launcher
     {
         static void Main()
         {
-            string location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string location = Assembly.GetExecutingAssembly().Location;
             int index = location.LastIndexOf("\\");
             string exePath = location.Substring(0, index);
 
-            string wslbridge = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\wslbridge";
-            Directory.CreateDirectory(wslbridge);
+            string appData = ApplicationData.Current.LocalCacheFolder.Path; //only for UWP//
             string[] files = new string[] { "cygwin1.dll", "wslbridge.exe", "wslbridge-backend" };
             foreach (string file in files)
             {
-                File.Copy($"{exePath}\\{file}", $"{wslbridge}\\{file}", true);
+                File.Copy($"{exePath}\\{file}", $"{appData}\\{file}", true);
             }
 
-            string mintty = $"{exePath}\\mintty.exe";
-            string wslbridgePath = $"{ApplicationData.Current.LocalCacheFolder.Path}\\Roaming\\wslbridge\\wslbridge.exe";
-            string configPath = $"{ApplicationData.Current.LocalCacheFolder.Path}\\Roaming\\mintty.config";
+            string wslbridge = $"{appData}\\wslbridge.exe";
+            string config = $"{appData}\\mintty.config";
             Process.Start(
-                mintty,
-                $" --config {configPath} --icon \"{exePath}\\wsltty.ico\" --exec {wslbridgePath}  -C ~"
+                $"{exePath}\\mintty.exe",
+                $" --config {config} --icon \"{exePath}\\wsltty.ico\" --exec {wslbridge}  -C ~"
                 );
         }
     }
 }
-
-/*END-35*/
