@@ -4,7 +4,34 @@ Windows Store Appx package of Wsltty, terminal for Windows Subsystem for Linux w
 
 ## How to build
 
-Clone, or download and unpack, the [wsltty.appx] repository. Download the wsltty.zip file from [wsltty.appx releases]. Extract the whole `/bin` and `/usr` folder from wsltty.zip and **place those folders in the previous clone directory** (i.e. of wsltty.appx repository). Now run the `build.cmd` batch file. You will be asked to enter password three times for creating CER, PVK and PFX files.
+### Get wsltty
+
+Clone, or download and unpack, the [wsltty.appx] repository. 
+Download the wsltty.zip file from [wsltty.appx releases]. 
+Extract the whole `/bin` and `/usr` folder from wsltty.zip 
+and **place those folders in the previous clone directory** (i.e. of wsltty.appx repository).
+
+### Install MS development tools
+
+* Install [Windows SDK](https://developer.microsoft.com/windows/downloads/windows-10-sdk)
+  for the tools `makepri.exe`, `makeappx.exe`, `makecert.exe`, `pvk2pfx.exe`, `signtool.exe`
+* Install [Build Tools for Visual Studio](https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15)
+  from the [Visual Studio download page](https://www.visualstudio.com/downloads/)
+  for the tool `msbuild.exe`
+
+### Build wsltty app
+
+Now run the `build.cmd` batch file. You will be asked to enter password three times for creating CER, PVK and PFX files.
+
+## How to install
+
+### Certificate
+
+Activate / double-click the certificate file, ...
+
+### App
+
+Activate / double-click `wsltty.appx`.
 
 ## Customization
 
