@@ -44,7 +44,11 @@ wslbridge-commit=06fb7acba28d7f37611f3911685af214739895a0
 #############################################################################
 # default target
 
-all:	check pkg
+all:	all-$(notdir $(CURDIR))
+
+all-wsltty:	check pkg
+
+all-wsltty.appx:	appx
 
 #############################################################################
 # target checking and some defs
