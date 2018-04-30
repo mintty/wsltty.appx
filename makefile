@@ -196,6 +196,8 @@ ver:
 
 mintty:	mintty-get mintty-build
 
+mintty-usr:	mintty-get mintty-appx
+
 # local wsltty build target:
 wsltty:	wslbridge cygwin mintty-build mintty-pkg
 
