@@ -13,7 +13,8 @@ i686)	arch=x86;;
 x86_64)	arch=x64;;
 *)	echo unknown uname -m; exit;;
 esac
-sdkpath="$pfx86/Windows Kits/10/bin/10.0.16299.0/$arch"
+ver=`(cd "$pfx86/Windows Kits/10/bin"; ls -dr 10.*) | sed -e 1q`
+sdkpath="$pfx86/Windows Kits/10/bin/$ver/$arch"
 
 PATH="$buildpath:$sdkpath:$PATH"
 
