@@ -21,35 +21,43 @@ PATH="$buildpath:$sdkpath:$PATH"
 #############################################################################
 # clean before build
 
+echo cleaning old build artefacts >&2
 rm -fr build
-rm -f privatekeyfile.pvk certfile.cer pfxfile.pfx wsltty.appx
+rm -f privatekeyfile.pvk certfile.cer pfxfile.pfx wsltty_unsigned.appx
 
 #############################################################################
 # build
 
 # build resources.pri
+echo copying assets >&2
 mkdir build
 cp -Rlp Assets build/
 cp AppXManifest.xml build/
 
-makepri.exe new /pr build /cf resources.pri.xml /mn 'build\AppXManifest.xml' /of build\resources.pri
+rm -fr build/resources.pri # or makepri.exe would stall in confirmation prompt
+makepri.exe new /pr build /cf resources.pri.xml /mn 'build\AppXManifest.xml' /of 'build\resources.pri'
 
 # copy bin, usr, ico file
+echo copying mintty >&2
 cp -Rlp bin build/
 cp -Rlp usr build/
-cp -lp wsltty.ico build/bin/
+cp -flp wsltty.ico build/bin/
 
 # build launcher
-MSBuild.exe 'Launcher\Launcher.csproj'
+MSBuild.exe /nologo /verbosity:minimal 'Launcher\Launcher.csproj'
 cp Launcher/Launcher.exe Launcher/Launcher.exe.config build/bin/
 
 # build appx package
-makeappx.exe pack /l /d build /p wsltty.appx
+makeappx.exe pack /l /d build /p wsltty_unsigned.appx
 
 # sign appx
 makecert.exe -a sha256 -r -sv privatekeyfile.pvk -n "CN=mintty" certfile.cer
+#-> privatekeyfile.pvk certfile.cer
 pvk2pfx.exe -pvk privatekeyfile.pvk -spc certfile.cer -pfx pfxfile.pfx
+#-> pfxfile.pfx
+cp -fp wsltty_unsigned.appx wsltty.appx
 signtool.exe sign /fd sha256 /a /f pfxfile.pfx wsltty.appx
+#-> wsltty.appx signed
 
 # cleanup
 rm -fr build

@@ -209,7 +209,7 @@ wsltty-appx:	wslbridge appx-bin mintty-get mintty-build mintty-appx
 
 # appx package target:
 appx:	wsltty-appx
-	echo winpty cmd /C build.cmd
+	sh ./build.sh
 
 #############################################################################
 # end
