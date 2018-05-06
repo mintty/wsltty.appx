@@ -14,17 +14,13 @@ namespace Launcher
             string exePath = location.Substring(0, index);
 
             string appData = ApplicationData.Current.LocalCacheFolder.Path; //only for UWP//
-            string[] files = new string[] { "cygwin1.dll", "wslbridge.exe", "wslbridge-backend" };
-            foreach (string file in files)
-            {
-                File.Copy($"{exePath}\\{file}", $"{appData}\\{file}", true);
-            }
+            File.Copy($"{exePath}\\wslbridge-backend", $"{appData}\\wslbridge-backend", true);
 
-            string wslbridge = $"{appData}\\wslbridge.exe";
+            string wslbridge = $"\"{exePath}\\wslbridge.exe\" --backend \"{appData}\\wslbridge-backend\" -C ~";
             string config = $"{appData}\\mintty.config";
             Process.Start(
                 $"{exePath}\\mintty.exe",
-                $" --config {config} --icon \"{exePath}\\wsltty.ico\" --exec {wslbridge}  -C ~"
+                $" --config {config} --icon \"{exePath}\\wsltty.ico\" --exec {wslbridge}"
                 );
         }
     }
