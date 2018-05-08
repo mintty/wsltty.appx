@@ -21,11 +21,15 @@ TrustedPeople certificate store in Local Machine.
 This allows to install the Appx package with `Add-AppxPackage` cmdlet
 from Powershell. With uninstall option, these steps will be reversed.
 
+<img height=258 align=right src=wsltty.appx.png>
+
 ### Manual installation
 
 You can install the certificate as described in the [Developers page](DEVELOP).
-<img align=right src=wsltty.appx.png>
+
 Then run (double-click) the appx package to install it.
+
+<br clear=all>
 
 ## How to build
 
