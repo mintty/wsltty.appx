@@ -25,7 +25,7 @@ from Powershell. With uninstall option, these steps will be reversed.
 
 ### Manual installation
 
-You can install the certificate as described in the [Developers page](DEVELOP).
+You can install the certificate as described in the [Developers page](DEVELOP.md).
 
 Then run (double-click) the appx package to install it.
 
