@@ -8,11 +8,14 @@
 
 
 # wsltty release
-ver=1.8.5.3
+ver=1.9.0.2
+
+# wsltty appx release
+verx=0.9.0.2
 
 ##############################
 # mintty release version
-minttyver=2.8.5
+minttyver=2.9.0
 
 # or mintty branch or commit version
 #minttyver=master
@@ -40,6 +43,9 @@ wslbridge-commit=29df86d87135caec8424c08f031ce121a3a39ae1
 
 # after 0.2.4, merged wslpath branch:
 wslbridge-commit=06fb7acba28d7f37611f3911685af214739895a0
+
+# after 0.2.4, with --backend option:
+wslbridge-commit=47b41bec6c32da58ab01de9345087b1a4fd836e3
 
 #############################################################################
 # default target
@@ -119,13 +125,23 @@ mintty-get:
 	unzip -o mintty-$(minttyver).zip
 
 wslbuild=LDFLAGS="-static -static-libgcc -s"
+appxbuild=$(wslbuild) -DWSLTTY_APPX
 wslversion=VERSION_SUFFIX="– wsltty $(ver)" WSLTTY_VERSION="$(ver)"
+appxversion=VERSION_SUFFIX="– wsltty appx $(verx)" WSLTTY_VERSION="$(verx)"
 
 mintty-build:
 	# ensure rebuild of version-specific check and message
 	rm -f mintty-$(minttyver)/bin/*/windialog.o
 	# build mintty
 	cd mintty-$(minttyver)/src; make $(wslbuild) $(wslversion)
+	mkdir -p bin
+	cp mintty-$(minttyver)/bin/mintty.exe bin/
+
+mintty-build-appx:
+	# ensure rebuild of version-specific check and message
+	rm -f mintty-$(minttyver)/bin/*/windialog.o
+	# build mintty
+	cd mintty-$(minttyver)/src; make $(appxbuild) $(appxversion)
 	mkdir -p bin
 	cp mintty-$(minttyver)/bin/mintty.exe bin/
 
@@ -205,7 +221,7 @@ wsltty:	wslbridge cygwin mintty-build mintty-pkg
 pkg:	wslbridge cygwin mintty-get mintty-build mintty-pkg cab
 
 # appx package contents target:
-wsltty-appx:	wslbridge appx-bin mintty-get mintty-build mintty-appx
+wsltty-appx:	wslbridge appx-bin mintty-get mintty-build-appx mintty-appx
 
 # appx package target:
 appx:	wsltty-appx
