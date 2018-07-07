@@ -125,7 +125,7 @@ mintty-get:
 	unzip -o mintty-$(minttyver).zip
 
 wslbuild=LDFLAGS="-static -static-libgcc -s"
-appxbuild=$(wslbuild) -DWSLTTY_APPX
+appxbuild=$(wslbuild) CCOPT=-DWSLTTY_APPX
 wslversion=VERSION_SUFFIX="– wsltty $(ver)" WSLTTY_VERSION="$(ver)"
 appxversion=VERSION_SUFFIX="– wsltty appx $(verx)" WSLTTY_VERSION="$(verx)"
 
