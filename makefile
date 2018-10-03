@@ -8,14 +8,14 @@
 
 
 # wsltty release
-ver=1.9.0.2
+ver=1.9.2
 
 # wsltty appx release
-verx=0.9.0.2
+verx=0.9.2
 
 ##############################
 # mintty release version
-minttyver=2.9.0
+minttyver=2.9.2
 
 # or mintty branch or commit version
 #minttyver=master
@@ -116,7 +116,7 @@ wslbridge-frontend:	wslbridge-source
 	cp wslbridge-$(wslbridge-commit)/out/wslbridge.exe bin/
 
 wslbridge-backend:	wslbridge-source
-	cd wslbridge-$(wslbridge-commit)/backend; wslbridge make
+	cd wslbridge-$(wslbridge-commit)/backend; if uname -m | grep x86_64; then cmd /C wsl make; else wslbridge make; fi
 	mkdir -p bin
 	cp wslbridge-$(wslbridge-commit)/out/wslbridge-backend bin/
 
