@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package IgnorableNamespaces="uap rescap rescap3" xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:rescap3="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities/3">
-  <Identity Name="mintty.wsltty" ProcessorArchitecture="x64" Publisher="CN=mintty" Version="1.0.0.0"/>
+  <Identity Name="mintty.wsltty" ProcessorArchitecture="x64" Publisher="CN=mintty" Version="1.9.3.0"/>
   <Applications>
     <Application Executable="bin\launcher.exe" EntryPoint="Windows.FullTrustApplication" Id="wsltty">
       <uap:VisualElements DisplayName="wsltty" Description="Mintty as a terminal for Windows Subsystem for Linux" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
