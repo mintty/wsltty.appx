@@ -8,14 +8,18 @@
 
 
 # wsltty release
-ver=1.9.2
+ver=1.9.3
 
-# wsltty appx release
-verx=0.9.2
+# wsltty appx release - must have 4 parts!
+verx=1.9.3.0
+
+# Windows SDK version for appx
+WINSDKKEY=/HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/Microsoft/.NET Framework Platform/Setup/Multi-Targeting Pack
+WINSDKVER=`regtool list '$(WINSDKKEY)' | sed -e '$$ q' -e d`
 
 ##############################
 # mintty release version
-minttyver=2.9.2
+minttyver=2.9.3
 
 # or mintty branch or commit version
 #minttyver=master
@@ -89,6 +93,19 @@ check:
 	#uname -m | grep i686
 	# check 64 bit to provide 64-Bit stability support:
 	uname -m | grep x86_64
+
+#############################################################################
+# patch version information for appx package configuration
+
+fix-verx:
+	echo patching $(WINSDKVER) into Launcher config
+	cd Launcher; sed -i~ -e "/<supportedRuntime / s,Version=v[.0-9]*,Version=$(WINSDKVER)," app.config
+	echo patched app.config
+	cd Launcher; sed -i~ -e "/<TargetFrameworkVersion>/ s,v[.0-9]*,$(WINSDKVER)," Launcher.csproj
+	echo patched Launcher.csproj
+	echo patching $(verx) into app config
+	sed -i~ -e '/<Identity / s,Version="[.0-9]*",Version="$(verx)",' AppxManifest.xml
+	echo pached AppxManifest.xml
 
 #############################################################################
 # generation
@@ -224,7 +241,7 @@ pkg:	wslbridge cygwin mintty-get mintty-build mintty-pkg cab
 wsltty-appx:	wslbridge appx-bin mintty-get mintty-build-appx mintty-appx
 
 # appx package target:
-appx:	wsltty-appx
+appx:	wsltty-appx fix-verx
 	sh ./build.sh
 
 #############################################################################
