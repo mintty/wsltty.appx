@@ -18,6 +18,15 @@ sdkpath="$pfx86/Windows Kits/10/bin/$ver/$arch"
 
 PATH="$buildpath:$sdkpath:$PATH"
 
+echo "$buildpath"
+echo "$sdkpath"
+type makepri || exit 9
+type MSBuild || exit 9
+type makeappx || exit 9
+type makecert || exit 9
+type pvk2pfx || exit 9
+type signtool || exit 9
+
 #############################################################################
 # clean before build
 

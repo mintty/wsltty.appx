@@ -8,10 +8,10 @@
 
 
 # wsltty release
-ver=1.9.5
+ver=3.0.1
 
 # wsltty appx release - must have 4 parts!
-verx=1.9.5.0
+verx=3.0.1.0
 
 # Windows SDK version for appx
 WINSDKKEY=/HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/Microsoft/.NET Framework Platform/Setup/Multi-Targeting Pack
@@ -19,7 +19,7 @@ WINSDKVER=`regtool list '$(WINSDKKEY)' | sed -e '$$ q' -e d`
 
 ##############################
 # mintty release version
-minttyver=2.9.5
+minttyver=3.0.1
 
 # or mintty branch or commit version
 #minttyver=master
@@ -121,18 +121,26 @@ wslbridge-package:
 
 wslbridge-source:	wslbridge-$(wslbridge-commit).zip
 	unzip -o wslbridge-$(wslbridge-commit).zip
+	cd wslbridge-$(wslbridge-commit)/backend; patch -T -p1 < ../../wslbridge-backend-static.patch
 	tr -d '\015' < wslbridge-$(wslbridge-commit)/LICENSE.txt > LICENSE.wslbridge
 
 wslbridge-$(wslbridge-commit).zip:
 	$(wgeto) https://github.com/rprichard/wslbridge/archive/$(wslbridge-commit).zip -o wslbridge-$(wslbridge-commit).zip
 
 wslbridge-frontend:	wslbridge-source
+	echo ------------- Compiling wslbridge frontend
 	cd wslbridge-$(wslbridge-commit)/frontend; make
 	strip wslbridge-$(wslbridge-commit)/out/wslbridge.exe
 	mkdir -p bin
 	cp wslbridge-$(wslbridge-commit)/out/wslbridge.exe bin/
 
-wslbridge-backend:	wslbridge-source
+#wslbridge-backend:	wslbridge-source
+# tweak dependency to support build testing on non-Windows 10:
+backend-bin=wslbridge-$(wslbridge-commit)/out/wslbridge-backend
+backend-src=wslbridge-$(wslbridge-commit)/backend/wslbridge-backend.cc
+wslbridge-backend:	$(backend-bin) wslbridge-source
+$(backend-bin):	$(backend-src)
+	echo ------------- Compiling wslbridge backend
 	cd wslbridge-$(wslbridge-commit)/backend; if uname -m | grep x86_64; then cmd /C wsl make; else wslbridge make; fi
 	mkdir -p bin
 	cp wslbridge-$(wslbridge-commit)/out/wslbridge-backend bin/
@@ -140,6 +148,7 @@ wslbridge-backend:	wslbridge-source
 mintty-get:
 	$(wgeto) https://github.com/mintty/mintty/archive/$(minttyver).zip -o mintty-$(minttyver).zip
 	unzip -o mintty-$(minttyver).zip
+	cp mintty-$(minttyver)/icon/terminal.ico mintty.ico
 
 wslbuild=LDFLAGS="-static -static-libgcc -s"
 appxbuild=$(wslbuild) CCOPT=-DWSLTTY_APPX
@@ -153,6 +162,7 @@ mintty-build:
 	cd mintty-$(minttyver)/src; make $(wslbuild) $(wslversion)
 	mkdir -p bin
 	cp mintty-$(minttyver)/bin/mintty.exe bin/
+	strip bin/mintty.exe
 
 mintty-build-appx:
 	# ensure rebuild of version-specific check and message
@@ -161,20 +171,24 @@ mintty-build-appx:
 	cd mintty-$(minttyver)/src; make $(appxbuild) $(appxversion)
 	mkdir -p bin
 	cp mintty-$(minttyver)/bin/mintty.exe bin/
+	strip bin/mintty.exe
 
 mintty-pkg:
 	cp mintty-$(minttyver)/LICENSE LICENSE.mintty
 	cd mintty-$(minttyver)/lang; zoo a lang *.po; mv lang.zoo ../../
 	cd mintty-$(minttyver)/themes; zoo a themes *[!~]; mv themes.zoo ../../
+	cd mintty-$(minttyver)/sounds; zoo a sounds *.wav *.WAV *.md; mv sounds.zoo ../../
 	# add charnames.txt to support "Character Info"
 	cd mintty-$(minttyver)/src; sh ./mknames
 	cp mintty-$(minttyver)/src/charnames.txt .
 
 mintty-appx:
 	mkdir -p usr/share/mintty
-	cd usr/share/mintty; mkdir -p lang themes info
+	cd usr/share/mintty; mkdir -p lang themes sounds info
 	cp mintty-$(minttyver)/lang/*.po usr/share/mintty/lang/
 	cp mintty-$(minttyver)/themes/*[!~] usr/share/mintty/themes/
+	cp mintty-$(minttyver)/sounds/*.wav usr/share/mintty/sounds/
+	cp mintty-$(minttyver)/sounds/*.WAV usr/share/mintty/sounds/
 	# add charnames.txt to support "Character Info"
 	cd mintty-$(minttyver)/src; sh ./mknames
 	cp mintty-$(minttyver)/src/charnames.txt usr/share/mintty/info/
@@ -204,6 +218,7 @@ cop:	ver
 	cp bin/zoo.exe rel/
 	cp lang.zoo rel/
 	cp themes.zoo rel/
+	cp sounds.zoo rel/
 	cp charnames.txt rel/
 	cp bin/wslbridge.exe rel/
 	cp bin/wslbridge-backend rel/

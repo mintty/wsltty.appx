@@ -85,6 +85,8 @@ build\
             +---lang\ (all .po files)
             |
             +---themes\ (all themes)
+            |
+            +---sounds\ (all bell sounds)
 ```
 
 * Make Appx package:
