@@ -8,48 +8,63 @@
 
 
 # wsltty release
-ver=3.0.1
+ver=3.4.1
 
 # wsltty appx release - must have 4 parts!
-verx=3.0.1.0
+verx=3.4.1.0
 
-# Windows SDK version for appx
-WINSDKKEY=/HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/Microsoft/.NET Framework Platform/Setup/Multi-Targeting Pack
-WINSDKVER=`regtool list '$(WINSDKKEY)' | sed -e '$$ q' -e d`
 
 ##############################
 # mintty release version
-minttyver=3.0.1
 
-# or mintty branch or commit version
-#minttyver=master
+minttyver=3.4.1
 
 ##############################
-# wslbridge binary package; may be overridden below
-wslbridge=wslbridge-package
-wslbridgever=0.2.4
 
-# or wslbridge branch or commit to build from source;
-# also set wslbridge-commit
+# wslbridge2 repository
+repo=Biswa96/wslbridge2
+
+# wslbridge2 master release version
+wslbridgever=0.6
+
+# wslbridge2 latest version
+#archive=master
+#wslbridgedir=wslbridge2-$(archive)
+
+# wslbridge2 branch or commit version (from fix-window-resize branch) and dir
+#commit=70e0dcea1db122d076ce1578f2a45280cc92d09f
+#commit=8b6dd7ee2b3102d72248990c21764c5cf86c6612
+#archive=$(commit)
+#wslbridgedir=wslbridge2-$(archive)
+
+
+# wslbridge2 fork repository and version
+#repo=mintty/wslbridge2
+#wslbridgever=0.5.1
+
+
+# wslbridge2 release or fork archive and dir
+archive=v$(wslbridgever)
+wslbridgedir=wslbridge2-$(wslbridgever)
+
+
+##############################
+
+# mintty branch or commit version
+#minttyver=master
+
+# wslbridge branch or commit to build from source;
 wslbridge=wslbridge-frontend wslbridge-backend
 
-# release 0.2.0 does not have cygwin_internal(CW_SYNC_WINENV) yet:
-#wslbridge-commit=master
+##############################
+# build backend on a musl-libc-based distribution
+# (reportedly not needed anymore but untested)
+BuildDistr=-d Alpine
 
-# use --distro-guid option (merged into 0.2.4):
-#wslbridge-commit=cb22e3f6f989cefe5b6599d3c04422ded74db664
-
-# after 0.2.4, from branch login-mode:
-wslbridge-commit=04a060505860915c99bc336dbeb80269771a80b7
-
-# after 0.2.4, from branch wslpath:
-wslbridge-commit=29df86d87135caec8424c08f031ce121a3a39ae1
-
-# after 0.2.4, merged wslpath branch:
-wslbridge-commit=06fb7acba28d7f37611f3911685af214739895a0
-
-# after 0.2.4, with --backend option:
-wslbridge-commit=47b41bec6c32da58ab01de9345087b1a4fd836e3
+##############################
+# Windows SDK version for appx
+WINSDKKEY=/HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/Microsoft/.NET Framework Platform/Setup/Multi-Targeting Pack
+WINSDKVER=`regtool list '$(WINSDKKEY)' | sed -e '$$ q' -e d`
 
 #############################################################################
 # default target
@@ -85,14 +100,20 @@ wgeto=curl -R -L --connect-timeout 55
 # - ensure the path name drag-and-drop adaptation works (-> Cygwin, not MSYS)
 # - 64 Bit (x86_64) for more stable invocation (avoid fork issues)
 
-check:
+arch:=$(shell uname -m)
+
+check:	# checkarch
+	echo Building for:
+	echo $(arch) | grep .
 	# checking suitable host environment; run `make pkg` to bypass
 	# check cygwin (vs msys) for proper drag-and-drop paths:
 	uname | grep CYGWIN
+
+checkarch:
 	# check 32 bit to ensure 32-Bit Windows support, just in case:
 	#uname -m | grep i686
 	# check 64 bit to provide 64-Bit stability support:
-	uname -m | grep x86_64
+	#uname -m | grep x86_64
 
 #############################################################################
 # patch version information for appx package configuration
@@ -108,42 +129,46 @@ fix-verx:
 	echo patched AppxManifest.xml
 
 #############################################################################
+# clear binaries
+
+clean:
+	rm -fr $(wslbridgedir)/bin
+	rm -fr bin
+
+#############################################################################
 # generation
 
 wslbridge:	$(wslbridge)
 
-wslbridge-package:
-	$(wget) https://github.com/rprichard/wslbridge/releases/download/$(wslbridgever)/wslbridge-$(wslbridgever)-$(sys).tar.gz
-	tar xvzf wslbridge-$(wslbridgever)-$(sys).tar.gz
-	mkdir -p bin
-	cp wslbridge-$(wslbridgever)-$(sys)/wslbridge* bin/
-	tr -d '\015' < wslbridge-$(wslbridgever)-$(sys)/LICENSE.txt > LICENSE.wslbridge
+$(wslbridgedir).zip:
+	$(wgeto) https://github.com/$(repo)/archive/$(archive).zip -o $(wslbridgedir).zip
 
-wslbridge-source:	wslbridge-$(wslbridge-commit).zip
-	unzip -o wslbridge-$(wslbridge-commit).zip
-	cd wslbridge-$(wslbridge-commit)/backend; patch -T -p1 < ../../wslbridge-backend-static.patch
-	tr -d '\015' < wslbridge-$(wslbridge-commit)/LICENSE.txt > LICENSE.wslbridge
-
-wslbridge-$(wslbridge-commit).zip:
-	$(wgeto) https://github.com/rprichard/wslbridge/archive/$(wslbridge-commit).zip -o wslbridge-$(wslbridge-commit).zip
+wslbridge-source:	$(wslbridgedir).zip
+	unzip -o $(wslbridgedir).zip
+	cp $(wslbridgedir)/LICENSE LICENSE.wslbridge2
+	# patch
+	cd $(wslbridgedir); patch -p1 < ../0001-notify-size-change-inband.patch
 
 wslbridge-frontend:	wslbridge-source
-	echo ------------- Compiling wslbridge frontend
-	cd wslbridge-$(wslbridge-commit)/frontend; make
-	strip wslbridge-$(wslbridge-commit)/out/wslbridge.exe
+	echo ------------- Compiling wslbridge2 frontend
 	mkdir -p bin
-	cp wslbridge-$(wslbridge-commit)/out/wslbridge.exe bin/
+	# frontend build
+	cd $(wslbridgedir)/src; make -f Makefile.frontend RELEASE=1
+	# extract binaries
+	cp $(wslbridgedir)/bin/wslbridge2.exe bin/
 
-#wslbridge-backend:	wslbridge-source
-# tweak dependency to support build testing on non-Windows 10:
-backend-bin=wslbridge-$(wslbridge-commit)/out/wslbridge-backend
-backend-src=wslbridge-$(wslbridge-commit)/backend/wslbridge-backend.cc
-wslbridge-backend:	$(backend-bin) wslbridge-source
-$(backend-bin):	$(backend-src)
-	echo ------------- Compiling wslbridge backend
-	cd wslbridge-$(wslbridge-commit)/backend; if uname -m | grep x86_64; then cmd /C wsl make; else wslbridge make; fi
+windir=$(shell cd "${WINDIR}"; pwd)
+
+wslbridge-backend:	wslbridge-source
+	echo ------------- Compiling wslbridge2 backend
+	#uname -m | grep x86_64
 	mkdir -p bin
-	cp wslbridge-$(wslbridge-commit)/out/wslbridge-backend bin/
+	# provide dependencies for backend build
+	PATH="$(windir)/Sysnative:${PATH}" cmd /C wsl.exe -u root $(BuildDistr) $(shell env | grep http_proxy=) apk add make g++ linux-headers < /dev/null
+	# invoke backend build
+	cd $(wslbridgedir)/src; PATH="$(windir)/Sysnative:${PATH}" cmd /C wsl.exe $(BuildDistr) make -f Makefile.backend RELEASE=1 < /dev/null
+	# extract binaries
+	cp $(wslbridgedir)/bin/wslbridge2-backend bin/
 
 mintty-get:
 	$(wgeto) https://github.com/mintty/mintty/archive/$(minttyver).zip -o mintty-$(minttyver).zip
@@ -193,13 +218,22 @@ mintty-appx:
 	cd mintty-$(minttyver)/src; sh ./mknames
 	cp mintty-$(minttyver)/src/charnames.txt usr/share/mintty/info/
 
-cygwin:
+cygwin:	# mkshortcutexe
 	mkdir -p bin
 	cp /bin/cygwin1.dll bin/
 	cp /bin/cygwin-console-helper.exe bin/
 	cp /bin/dash.exe bin/
 	cp /bin/regtool.exe bin/
 	cp /bin/zoo.exe bin/
+
+mkshortcutexe:	bin/mkshortcut.exe
+
+bin/mkshortcut.exe:	mkshortcut.c
+	echo mksh
+	gcc -o bin/mkshortcut mkshortcut.c -lpopt -lole32 /usr/lib/w32api/libuuid.a
+	cp /bin/cygpopt-0.dll bin/
+	cp /bin/cygiconv-2.dll bin/
+	cp /bin/cygintl-8.dll bin/
 
 appx-bin:
 	mkdir -p bin
@@ -208,8 +242,8 @@ appx-bin:
 
 cop:	ver
 	mkdir -p rel
-	rm -fr rel/wsltty-$(ver)-install.exe
-	sed -e "s,%version%,$(ver)," makewinx.cfg > rel/wsltty.SED
+	rm -f rel/wsltty-$(ver)-install-$(arch).exe
+	sed -e "s,%version%,$(ver)," -e "s,%arch%,$(arch)," makewinx.cfg > rel/wsltty.SED
 	cp bin/cygwin1.dll rel/
 	cp bin/cygwin-console-helper.exe rel/
 	cp bin/dash.exe rel/
@@ -220,8 +254,13 @@ cop:	ver
 	cp themes.zoo rel/
 	cp sounds.zoo rel/
 	cp charnames.txt rel/
-	cp bin/wslbridge.exe rel/
-	cp bin/wslbridge-backend rel/
+	cp bin/wslbridge2.exe rel/
+	cp bin/wslbridge2-backend rel/
+	cp mkshortcut.vbs rel/
+	#cp bin/mkshortcut.exe rel/
+	#cp bin/cygpopt-0.dll rel/
+	#cp bin/cygiconv-2.dll rel/
+	#cp bin/cygintl-8.dll rel/
 	cp LICENSE.* rel/
 	cp VERSION rel/
 	cp *.lnk rel/
