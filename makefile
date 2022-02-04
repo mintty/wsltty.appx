@@ -4,20 +4,22 @@
 # make targets:
 # make [all]	build a distributable installer (default)
 # make pkg	build an installer, bypassing the system checks
+# make build	build the software (no installer)
+# make install	install wsltty locally from build (no installer needed)
 # make wsltty	build the software, using the local copy of mintty
 
 
 # wsltty release
-ver=3.4.1
+ver=3.5.3
 
 # wsltty appx release - must have 4 parts!
-verx=3.4.1.0
+verx=3.5.3.0
 
 
 ##############################
 # mintty release version
 
-minttyver=3.4.1
+minttyver=3.5.3
 
 ##############################
 
@@ -25,7 +27,7 @@ minttyver=3.4.1
 repo=Biswa96/wslbridge2
 
 # wslbridge2 master release version
-wslbridgever=0.6
+wslbridgever=0.8
 
 # wslbridge2 latest version
 #archive=master
@@ -148,6 +150,8 @@ wslbridge-source:	$(wslbridgedir).zip
 	cp $(wslbridgedir)/LICENSE LICENSE.wslbridge2
 	# patch
 	cd $(wslbridgedir); patch -p1 < ../0001-notify-size-change-inband.patch
+	# patch to https://github.com/Biswa96/wslbridge2/commit/41575379b416703c49e2687e957440239a4cdfb7
+	cd $(wslbridgedir); patch -p0 < ../0002-add-com-for-lifted-wsl.patch
 
 wslbridge-frontend:	wslbridge-source
 	echo ------------- Compiling wslbridge2 frontend
@@ -183,6 +187,7 @@ appxversion=VERSION_SUFFIX="– wsltty appx $(verx)" WSLTTY_VERSION="$(verx)"
 mintty-build:
 	# ensure rebuild of version-specific check and message
 	rm -f mintty-$(minttyver)/bin/*/windialog.o
+	rm -f mintty-$(minttyver)/bin/*/winmain.o
 	# build mintty
 	cd mintty-$(minttyver)/src; make $(wslbuild) $(wslversion)
 	mkdir -p bin
@@ -240,38 +245,59 @@ appx-bin:
 	cp /bin/cygwin1.dll bin/
 	cp /bin/cygwin-console-helper.exe bin/
 
-cop:	ver
-	mkdir -p rel
-	rm -f rel/wsltty-$(ver)-install-$(arch).exe
-	sed -e "s,%version%,$(ver)," -e "s,%arch%,$(arch)," makewinx.cfg > rel/wsltty.SED
-	cp bin/cygwin1.dll rel/
-	cp bin/cygwin-console-helper.exe rel/
-	cp bin/dash.exe rel/
-	cp bin/regtool.exe rel/
-	cp bin/mintty.exe rel/
-	cp bin/zoo.exe rel/
-	cp lang.zoo rel/
-	cp themes.zoo rel/
-	cp sounds.zoo rel/
-	cp charnames.txt rel/
-	cp bin/wslbridge2.exe rel/
-	cp bin/wslbridge2-backend rel/
-	cp mkshortcut.vbs rel/
-	#cp bin/mkshortcut.exe rel/
-	#cp bin/cygpopt-0.dll rel/
-	#cp bin/cygiconv-2.dll rel/
-	#cp bin/cygintl-8.dll rel/
-	cp LICENSE.* rel/
-	cp VERSION rel/
-	cp *.lnk rel/
-	cp *.ico rel/
-	cp *.url rel/
-	cp *.bat rel/
-	cp *.sh rel/
-	cp *.vbs rel/
+CAB=wsltty-$(ver)-$(arch)
 
-cab:	cop
+copcab:	ver
+	mkdir -p $(CAB)
+	cp bin/cygwin1.dll $(CAB)/
+	cp bin/cygwin-console-helper.exe $(CAB)/
+	cp bin/dash.exe $(CAB)/
+	cp bin/regtool.exe $(CAB)/
+	cp bin/mintty.exe $(CAB)/
+	cp bin/zoo.exe $(CAB)/
+	cp lang.zoo $(CAB)/
+	cp themes.zoo $(CAB)/
+	cp sounds.zoo $(CAB)/
+	cp charnames.txt $(CAB)/
+	cp bin/wslbridge2.exe $(CAB)/
+	cp bin/wslbridge2-backend $(CAB)/
+	cp mkshortcut.vbs $(CAB)/
+	#cp bin/mkshortcut.exe $(CAB)/
+	#cp bin/cygpopt-0.dll $(CAB)/
+	#cp bin/cygiconv-2.dll $(CAB)/
+	#cp bin/cygintl-8.dll $(CAB)/
+	cp LICENSE.* $(CAB)/
+	cp VERSION $(CAB)/
+	cp *.lnk $(CAB)/
+	cp *.ico $(CAB)/
+	cp *.url $(CAB)/
+	cp *.bat $(CAB)/
+	cp config-distros.sh $(CAB)/
+	cp mkshortcut.vbs $(CAB)/
+
+cop:	copcab
+	mkdir -p rel
+	cp -fl $(CAB)/* rel/
+
+installer:	cop cab normal-installer silent-installer
+
+cab:
+	# build cab archive
+	lcab -r $(CAB) rel/$(CAB).cab
+
+normal-installer:
+	# prepare build of installer
+	rm -f rel/$(CAB)-install.exe
+	sed -e "s,%version%,$(ver)," -e "s,%arch%,$(arch)," makewinx.cfg > rel/wsltty.SED
+	# build installer
 	cd rel; iexpress /n wsltty.SED
+
+silent-installer:
+	# prepare build of installer
+	rm -f rel/$(CAB)-install-quiet.exe
+	cd rel; sed -e "/ShowInstallProgramWindow/ s/0/1/" -e "/HideExtractAnimation/ s/0/1/" -e "/InstallPrompt/ s/=.*/=/" -e "/FinishMessage/ s/=.*/=/" -e "/TargetName/ s/install.exe/install-quiet.exe/" wsltty.SED > wsltty-quiet.SED
+	# build installer
+	cd rel; iexpress /n wsltty-quiet.SED
 
 install:	cop installbat
 
@@ -288,8 +314,11 @@ mintty-usr:	mintty-get mintty-appx
 # local wsltty build target:
 wsltty:	wslbridge cygwin mintty-build mintty-pkg
 
+# build software without installer:
+build:	wslbridge cygwin mintty-get mintty-build mintty-pkg
+
 # standalone wsltty package build target:
-pkg:	wslbridge cygwin mintty-get mintty-build mintty-pkg cab
+pkg:	wslbridge cygwin mintty-get mintty-build mintty-pkg installer
 
 # appx package contents target:
 wsltty-appx:	wslbridge appx-bin mintty-get mintty-build-appx mintty-appx

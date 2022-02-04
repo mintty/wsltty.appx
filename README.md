@@ -1,3 +1,7 @@
+This project is obsolete;
+wsltty is now available as a package for the `winget` installer,
+see wsltty homepage.
+
 # wsltty.appx
 
 Windows Store Appx package of wsltty, terminal for Windows Subsystem for Linux with mintty. mintty is the [Cygwin] Terminal emulator, also available for [MSYS] and [Msys2].
