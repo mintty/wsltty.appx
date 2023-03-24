@@ -10,16 +10,16 @@
 
 
 # wsltty release
-ver=3.5.3
+ver=3.6.4
 
 # wsltty appx release - must have 4 parts!
-verx=3.5.3.0
+verx=3.6.4.1
 
 
 ##############################
 # mintty release version
 
-minttyver=3.5.3
+minttyver=3.6.4
 
 ##############################
 
@@ -27,7 +27,7 @@ minttyver=3.5.3
 repo=Biswa96/wslbridge2
 
 # wslbridge2 master release version
-wslbridgever=0.8
+wslbridgever=0.11
 
 # wslbridge2 latest version
 #archive=master
@@ -148,10 +148,12 @@ $(wslbridgedir).zip:
 wslbridge-source:	$(wslbridgedir).zip
 	unzip -o $(wslbridgedir).zip
 	cp $(wslbridgedir)/LICENSE LICENSE.wslbridge2
-	# patch
-	cd $(wslbridgedir); patch -p1 < ../0001-notify-size-change-inband.patch
+	# the following two patches are obsolete with wslbridge2 v0.9
+	# patch to fix #220
+	# test case in mintty: (sleep 0.1; echo -e "\e[31;80t") & wslbridge2
+	#cd $(wslbridgedir); patch -p1 < ../0001-notify-size-change-inband.patch
 	# patch to https://github.com/Biswa96/wslbridge2/commit/41575379b416703c49e2687e957440239a4cdfb7
-	cd $(wslbridgedir); patch -p0 < ../0002-add-com-for-lifted-wsl.patch
+	#cd $(wslbridgedir); patch -p0 < ../0002-add-com-for-lifted-wsl.patch
 
 wslbridge-frontend:	wslbridge-source
 	echo ------------- Compiling wslbridge2 frontend
@@ -214,7 +216,7 @@ mintty-pkg:
 
 mintty-appx:
 	mkdir -p usr/share/mintty
-	cd usr/share/mintty; mkdir -p lang themes sounds info
+	cd usr/share/mintty; mkdir -p lang themes sounds info emojis
 	cp mintty-$(minttyver)/lang/*.po usr/share/mintty/lang/
 	cp mintty-$(minttyver)/themes/*[!~] usr/share/mintty/themes/
 	cp mintty-$(minttyver)/sounds/*.wav usr/share/mintty/sounds/
@@ -222,6 +224,7 @@ mintty-appx:
 	# add charnames.txt to support "Character Info"
 	cd mintty-$(minttyver)/src; sh ./mknames
 	cp mintty-$(minttyver)/src/charnames.txt usr/share/mintty/info/
+	cp /usr/share/mintty/emojis/get*[!~] usr/share/mintty/emojis/
 
 cygwin:	# mkshortcutexe
 	mkdir -p bin
@@ -274,12 +277,13 @@ copcab:	ver
 	cp *.bat $(CAB)/
 	cp config-distros.sh $(CAB)/
 	cp mkshortcut.vbs $(CAB)/
+	cp mintty-$(minttyver)/tools/get*[!~] $(CAB)/
 
 cop:	copcab
 	mkdir -p rel
 	cp -fl $(CAB)/* rel/
 
-installer:	cop cab normal-installer silent-installer
+installer:	cop cab normal-installer silent-installer portable-installer
 
 cab:
 	# build cab archive
@@ -298,6 +302,16 @@ silent-installer:
 	cd rel; sed -e "/ShowInstallProgramWindow/ s/0/1/" -e "/HideExtractAnimation/ s/0/1/" -e "/InstallPrompt/ s/=.*/=/" -e "/FinishMessage/ s/=.*/=/" -e "/TargetName/ s/install.exe/install-quiet.exe/" wsltty.SED > wsltty-quiet.SED
 	# build installer
 	cd rel; iexpress /n wsltty-quiet.SED
+
+InstallPrompt=Install Mintty terminal for WSL Portable?
+FinishMessage=Mintty for WSL Portable installation finished
+
+portable-installer:
+	# prepare build of installer
+	rm -f rel/$(CAB)-install-portable.exe
+	cd rel; sed -e "/InstallPrompt/ s/=.*/=$(InstallPrompt)/" -e "/FinishMessage/ s/=.*/=$(FinishMessage)/" -e "/AppLaunched/ s/install/install-portable/" -e "/TargetName/ s/install.exe/install-portable.exe/" wsltty.SED > wsltty-portable.SED
+	# build installer
+	cd rel; iexpress /n wsltty-portable.SED
 
 install:	cop installbat
 
